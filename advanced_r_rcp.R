@@ -7,8 +7,7 @@ cppFunction('
 int add(int x, int y, int z) {
   int sum = x + y + z;
   return sum;
-}
-')
+}')
 
 add(1, 2, 3)
 
@@ -51,10 +50,48 @@ bench::mark(
   sumC(x)
 )
 
-# type set ------------------------------------
+# c++ is type set ------------------------------------
 
 pdistR <- function(x, ys) { # x unclear scalar
   sqrt((x - ys)^2)
 }
 
+cppFunction('NumericVector pdistC(int x, NumericVector ys) {
+	int n = ys.size();
+	NumericVector out(n);
+	
+	for (int i; i < n; i++) {
+		out[i] = sqrt(pow(x - ys[i], 2.0));
+	}
+	
+	return out;
+}')
 
+# quite similar performance for base R (when vectorised)
+bench::mark(
+  pdistR(0, x),
+  pdistC(0, x)
+)
+
+# running standalone files in R ----------------------
+
+sourceCpp("meanC.cpp")
+
+x <- runif(1e5)
+
+# meanC is actually faster due to accuracy... Wow
+bench::mark(
+  mean(x),
+  meanC(x)
+)
+
+# implementations of var ----------------------------
+
+sourceCpp('varC_usual.cpp')
+
+bench::mark(
+  var(x),
+  varC_usual(x),
+  check = FALSE
+)
+# only accurate to 4 decimal places, but fast
